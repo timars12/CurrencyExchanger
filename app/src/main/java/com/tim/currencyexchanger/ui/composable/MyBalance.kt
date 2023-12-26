@@ -18,7 +18,7 @@ import com.tim.currencyexchanger.R
 import com.tim.currencyexchanger.data.model.CurrencyBalance
 import com.tim.currencyexchanger.ui.theme.CurrencyExchangerTheme
 import kotlinx.collections.immutable.ImmutableList
-import kotlinx.collections.immutable.toImmutableList
+import kotlinx.collections.immutable.persistentListOf
 import java.math.BigDecimal
 import java.math.RoundingMode
 
@@ -56,10 +56,10 @@ fun MyBalancePreview() {
         Column {
             MyBalance(
                 modifier = Modifier.fillMaxWidth(),
-                balance = listOf(
+                balance = persistentListOf(
                     CurrencyBalance(amount = BigDecimal(100), currency = "USD"),
                     CurrencyBalance(amount = BigDecimal(200), currency = "EUR")
-                ).toImmutableList()
+                )
             )
         }
     }
