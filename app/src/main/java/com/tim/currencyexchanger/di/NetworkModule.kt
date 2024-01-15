@@ -2,7 +2,6 @@ package com.tim.currencyexchanger.di
 
 import com.squareup.moshi.Moshi
 import com.tim.currencyexchanger.domain.network.CurrencyExchangeApiService
-import dagger.Lazy
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -29,11 +28,10 @@ class NetworkModule {
 
     @Singleton
     @Provides
-    fun provideRetrofit(okHttpClient: Lazy<OkHttpClient>): Retrofit {
+    fun provideRetrofit(): Retrofit {
         val moshi = Moshi.Builder().build()
         return Retrofit.Builder()
             .baseUrl(BASE_URL)
-//            .callFactory { request -> okHttpClient.get().newCall(request) }
             .addConverterFactory(MoshiConverterFactory.create(moshi))
             .build()
     }

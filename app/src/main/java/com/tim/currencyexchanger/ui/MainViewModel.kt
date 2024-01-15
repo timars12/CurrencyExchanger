@@ -12,11 +12,17 @@ import com.tim.currencyexchanger.domain.repository.MyBalanceRepository
 import com.tim.currencyexchanger.domain.repository.TransactionResult
 import com.tim.currencyexchanger.domain.usecase.TransactionUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.math.BigDecimal
@@ -39,6 +45,9 @@ class MainViewModel @Inject constructor(
     private val _infoDialogType = MutableStateFlow<InfoDialogType>(InfoDialogType.Hide)
     val infoDialogType = _infoDialogType.asStateFlow()
 
+    private val _searchQuery = MutableStateFlow("")
+    val searchQuery = _searchQuery.asStateFlow()
+
     private val _balance = MutableStateFlow(listOf<CurrencyBalance>().toImmutableList())
     val balance = _balance.asStateFlow()
 
@@ -52,8 +61,25 @@ class MainViewModel @Inject constructor(
     private val _buy = MutableStateFlow(CurrencyBalance(amount = BigDecimal("0.00"), currency = ""))
     val buy = _buy.asStateFlow()
 
-    private val _allCurrencies = MutableStateFlow(listOf<ExchangeRate>().toImmutableList())
-    val allCurrencies = _allCurrencies.asStateFlow()
+    private val allCurrencies = MutableStateFlow(listOf<ExchangeRate>())
+    private var listWithoutSelectedCurrency = emptyList<ExchangeRate>()
+
+    @OptIn(FlowPreview::class)
+    val searchCurrencies = searchQuery
+        .debounce(300)
+        .combine(allCurrencies) { searchQuery, _ ->
+            when {
+                searchQuery.isNotEmpty() -> listWithoutSelectedCurrency.filter { currency ->
+                    currency.currency.contains(searchQuery, ignoreCase = true)
+                }
+
+                else -> listWithoutSelectedCurrency
+            }.toImmutableList()
+        }.stateIn(
+            scope = viewModelScope,
+            initialValue = persistentListOf(),
+            started = SharingStarted.WhileSubscribed(5_000)
+        )
 
     init {
         viewModelScope.launch {
@@ -69,17 +95,16 @@ class MainViewModel @Inject constructor(
                 }
 
                 is Result.Success -> {
-                    _allCurrencies.update { currencies ->
-                        currencies.ifEmpty {
-                            _buy.update { balance ->
-                                balance.copy(
-                                    currency = result.data?.rates?.first()?.currency!!
-                                )
-                            }
-
-                            result.data?.rates?.sortedBy { it.currency }?.toImmutableList()
-                                ?: listOf<ExchangeRate>().toImmutableList()
+                    allCurrencies.value.ifEmpty {
+                        _buy.update { balance ->
+                            balance.copy(
+                                currency = result.data?.rates?.first()?.currency!!
+                            )
                         }
+
+                        allCurrencies.value =
+                            result.data?.rates?.sortedBy { it.currency } ?: emptyList()
+                        removeSelectedCurrency()
                     }
                 }
             }
@@ -151,6 +176,7 @@ class MainViewModel @Inject constructor(
                 ).formatDecimal()
             )
         }
+        removeSelectedCurrency()
     }
 
     private fun getCurrentRate(sellCurrency: String, buyCurrency: String): BigDecimal {
@@ -158,6 +184,15 @@ class MainViewModel @Inject constructor(
         val sellRate = allCurrencies.value.first { it.currency == sellCurrency }.rate
         val bayRate = allCurrencies.value.first { it.currency == buyCurrency }.rate
         return bayRate.divide(sellRate, MathContext.DECIMAL64)
+    }
+
+    private fun removeSelectedCurrency() {
+        listWithoutSelectedCurrency = allCurrencies.value.toMutableList()
+            .apply {
+                removeAll { data ->
+                    data.currency == buy.value.currency || data.currency == sell.value.currency
+                }
+            }
     }
 
     fun onClickSubmitExchange() {
@@ -182,5 +217,7 @@ class MainViewModel @Inject constructor(
     fun onClickHideDialog() = _infoDialogType.update { InfoDialogType.Hide }
 
     private fun BigDecimal.formatDecimal(): BigDecimal = this.setScale(2, RoundingMode.HALF_EVEN)
+
+    fun onSearchQueryChange(query: String) = _searchQuery.update { query }
 }
 

@@ -65,15 +65,16 @@ fun CurrencyExchangerScreen(viewModel: MainViewModel = viewModel()) {
     val balance by viewModel.balance.collectAsStateWithLifecycle()
     val sell by viewModel.sell.collectAsStateWithLifecycle()
     val receive by viewModel.buy.collectAsStateWithLifecycle()
-    val allCurrencies by viewModel.allCurrencies.collectAsStateWithLifecycle()
+    val allCurrencies by viewModel.searchCurrencies.collectAsStateWithLifecycle()
+    val searchQuery by viewModel.searchQuery.collectAsStateWithLifecycle()
 
     when (showSheet) {
         CurrencyBottomSheetState.ChangeReceiveCurrency -> {
             ChangeBuyCurrencyBottomSheet(
-                allCurrencies,
-                receive.currency,
-                sell.currency,
-                onCurrencySelected = remember { viewModel::onChangeReceiveCurrency }
+                allCurrencies = allCurrencies,
+                searchQuery = searchQuery,
+                onCurrencySelected = remember { viewModel::onChangeReceiveCurrency },
+                onSearchQueryChange = remember { viewModel::onSearchQueryChange }
             ) {
                 showSheet = CurrencyBottomSheetState.Hide
             }
