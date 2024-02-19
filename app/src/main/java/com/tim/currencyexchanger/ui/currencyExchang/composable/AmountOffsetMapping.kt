@@ -1,4 +1,4 @@
-package com.tim.currencyexchanger.ui.composable
+package com.tim.currencyexchanger.ui.currencyExchang.composable
 
 import androidx.compose.ui.text.input.OffsetMapping
 

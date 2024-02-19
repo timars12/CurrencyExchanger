@@ -1,4 +1,4 @@
-package com.tim.currencyexchanger.ui.composable
+package com.tim.currencyexchanger.ui.currencyExchang.composable
 
 import java.text.DecimalFormat
 import java.text.DecimalFormatSymbols

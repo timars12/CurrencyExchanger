@@ -2,6 +2,7 @@ package com.tim.currencyexchanger.di
 
 import android.content.Context
 import com.tim.currencyexchanger.data.db.CurrencyExchangeDatabase
+import com.tim.currencyexchanger.utils.NavigationDispatcher
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -16,4 +17,8 @@ class AppModule {
     @Provides
     fun provideDatabase(@ApplicationContext context: Context): CurrencyExchangeDatabase =
         CurrencyExchangeDatabase.getInstance(context)
+
+    @Singleton
+    @Provides
+    fun provideNavDispatcher(): NavigationDispatcher = NavigationDispatcher()
 }

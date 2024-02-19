@@ -1,4 +1,4 @@
-package com.tim.currencyexchanger.ui.composable
+package com.tim.currencyexchanger.ui.currencyExchang.composable
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.fillMaxSize

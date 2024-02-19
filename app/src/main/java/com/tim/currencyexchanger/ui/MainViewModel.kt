@@ -85,6 +85,8 @@ class MainViewModel @Inject constructor(
         viewModelScope.launch {
             awaitAll(async { getMyBalance() }, async { getExchangeRates() })
         }
+        val aa = savedStateHandle.get<String>("userId")
+        print(aa)
     }
 
     private suspend fun getExchangeRates() {
